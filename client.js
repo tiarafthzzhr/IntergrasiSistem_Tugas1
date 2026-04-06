@@ -8,7 +8,7 @@ const client = new chillProto.ChillArrivalService('localhost:50051', grpc.creden
 // --- UNARY (Request-Response) ---
 console.log("\n--- UNARY RPC ---");
 // parameter sesuai dengan message CommandRequest di proto
-client.sendCommand({ deviceId: "LAMP_KITCHEN", action: "ON" }, (err, res) => {
+client.sendCommand({ deviceId: "AC_BEDROOM", action: "ON" }, (err, res) => {
   if (err) {
     console.error("Safety Protocol (Error):", err.details);
   } else {
@@ -58,7 +58,7 @@ setTimeout(() => {
   const reports = [
     { deviceId: "AC_BEDROOM", watt: 450 },
     { deviceId: "AC_BEDROOM", watt: 1150 }, // Ini akan memicu alert
-    { deviceId: "DISPENSER", watt: 600 }
+    { deviceId: "PC_GAMING", watt: 600 }
   ];
 
   console.log("Mengirim laporan penggunaan daya ke server...");

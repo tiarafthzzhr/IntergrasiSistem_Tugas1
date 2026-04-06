@@ -31,10 +31,10 @@ server.addService(chillProto.ChillArrivalService.service, {
   streamClimateData: (call) => {
     console.log("[Streaming] Client terhubung ke Live Climate Feed.");
     const interval = setInterval(() => {
-      const temp = (Math.random() * (35 - 25) + 25).toFixed(1);
+      const temp = (Math.random() * (26 - 18) + 18).toFixed(1); // Suhu kamar yg lebih dingin
       call.write({
         temperature: parseFloat(temp),
-        location: "Ruang Tamu",
+        location: "Kamar Tidur",
         timestamp: new Date().toLocaleTimeString()
       });
     }, 2000);
