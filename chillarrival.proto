@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package chillarrival;
+
+// Menyatukan 3 Service sesuai Arsitektur di PPT
+service ChillArrivalService {
+  // 1. Unary: Instant Command (Nyalakan/Matikan AC)
+  rpc SendCommand(CommandRequest) returns (CommandResponse);
+
+  // 2. Server Streaming: Live Climate Feed (Grafik Suhu)
+  rpc StreamClimateData(Empty) returns (stream ClimateData);
+
+  // 3. Bi-directional Streaming: Eco-Analytics (Monitor Listrik)
+  rpc MonitorEnergy(stream EnergyData) returns (stream EnergyAlert);
+}
+
+message Empty {}
+
+message CommandRequest {
+  string device_id = 1;
+  string action = 2; // "ON" atau "OFF"
+}
+
+message CommandResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ClimateData {
+  float temperature = 1;
+  string location = 2;
+  string timestamp = 3;
+}
+
+message EnergyData {
+  string device_id = 1;
+  float watt = 2;
+}
+
+message EnergyAlert {
+  string alert_message = 1;
+  bool is_critical = 2;
+}
