@@ -10,12 +10,12 @@ const maintenanceDevices = ["AC_LIVING"]; // Simulasi AC sedang rusak
 const server = new grpc.Server();
 
 server.addService(chillProto.ChillArrivalService.service, {
-  // 1. Implementasi Unary (Instant Command)
+  // 1. Implementasi Unary 
   sendCommand: (call, callback) => {
     const { deviceId, action } = call.request;
     console.log(`[Unary] Request: ${deviceId} -> ${action}`);
 
-    // Error Handling: Safety Protocol (Sesuai PPT)
+    // Error Handling: Safety Protocol 
     if (maintenanceDevices.includes(deviceId)) {
       return callback({
         code: grpc.status.FAILED_PRECONDITION,
@@ -42,7 +42,7 @@ server.addService(chillProto.ChillArrivalService.service, {
     call.on('cancelled', () => clearInterval(interval));
   },
 
-  // 3. Implementasi Bi-directional Streaming (Eco-Analytics)
+  // 3. Bi-directional Streaming (Eco-Analytics)
   monitorEnergy: (call) => {
     console.log("[Bidi] Monitoring Energi dimulai.");
     call.on('data', (data) => {

@@ -46,14 +46,34 @@ setTimeout(() => {
   console.log("\n--- BI-DIRECTIONAL STREAMING (ENERGY) ---");
   const bidi = client.monitorEnergy();
 
+  // Mendengarkan respon/alert dari server
   bidi.on('data', (alert) => {
-    console.log(">>> NOTIFIKASI:", alert.alertMessage);
+    console.log(`\x1b[31m[ALERT DITERIMA]\x1b[0m ${alert.alertMessage}`); // Teks merah untuk alert
   });
 
   bidi.on('error', (err) => console.log("Bidi Error:", err.message));
+  bidi.on('end', () => console.log("Streaming Energy Selesai."));
 
-  console.log("Sending power usage data...");
-  bidi.write({ deviceId: "AC_BEDROOM", watt: 450 });
-  bidi.write({ deviceId: "AC_BEDROOM", watt: 1150 }); // Memicu alert
-  bidi.end();
+  // Data yang akan dikirim
+  const reports = [
+    { deviceId: "AC_BEDROOM", watt: 450 },
+    { deviceId: "AC_BEDROOM", watt: 1150 }, // Ini akan memicu alert
+    { deviceId: "DISPENSER", watt: 600 }
+  ];
+
+  console.log("Mengirim laporan penggunaan daya ke server...");
+  
+  reports.forEach((data, index) => {
+    // Delay sedikit antar pengiriman agar log tidak menumpuk instan
+    setTimeout(() => {
+      console.log(`[CLIENT SEND] Mengirim data: ${data.deviceId} - Penggunaan: ${data.watt}W`);
+      bidi.write(data);
+      
+      // Jika sudah data terakhir, tutup stream
+      if (index === reports.length - 1) {
+        setTimeout(() => bidi.end(), 1000);
+      }
+    }, index * 1500); 
+  });
+
 }, 10000);
