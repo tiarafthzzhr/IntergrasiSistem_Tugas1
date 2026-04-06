@@ -8,7 +8,7 @@ const client = new chillProto.ChillArrivalService('localhost:50051', grpc.creden
 // --- UNARY (Request-Response) ---
 console.log("\n--- UNARY RPC ---");
 // parameter sesuai dengan message CommandRequest di proto
-client.sendCommand({ device_id: "LAMP_KITCHEN", action: "ON" }, (err, res) => {
+client.sendCommand({ deviceId: "LAMP_KITCHEN", action: "ON" }, (err, res) => {
   if (err) {
     console.error("Safety Protocol (Error):", err.details);
   } else {
@@ -47,13 +47,13 @@ setTimeout(() => {
   const bidi = client.monitorEnergy();
 
   bidi.on('data', (alert) => {
-    console.log(">>> NOTIFIKASI:", alert.alert_message);
+    console.log(">>> NOTIFIKASI:", alert.alertMessage);
   });
 
   bidi.on('error', (err) => console.log("Bidi Error:", err.message));
 
   console.log("Sending power usage data...");
-  bidi.write({ device_id: "AC_BEDROOM", watt: 450 });
-  bidi.write({ device_id: "AC_BEDROOM", watt: 1150 }); // Memicu alert
+  bidi.write({ deviceId: "AC_BEDROOM", watt: 450 });
+  bidi.write({ deviceId: "AC_BEDROOM", watt: 1150 }); // Memicu alert
   bidi.end();
 }, 10000);

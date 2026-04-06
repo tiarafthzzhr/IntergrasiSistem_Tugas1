@@ -46,9 +46,9 @@ server.addService(chillProto.ChillArrivalService.service, {
   monitorEnergy: (call) => {
     console.log("[Bidi] Monitoring Energi dimulai.");
     call.on('data', (data) => {
-      console.log(`[Log] Listrik ${data.device_id}: ${data.watt}W`);
+      console.log(`[Log] Listrik ${data.deviceId}: ${data.watt}W`);
       if (data.watt > 1000) {
-        call.write({ alert_message: `BOROS! Matikan ${data.device_id} sekarang!`, is_critical: true });
+        call.write({ alertMessage: `BOROS! Matikan ${data.deviceId} sekarang!`, isCritical: true });
       }
     });
     call.on('end', () => call.end());
