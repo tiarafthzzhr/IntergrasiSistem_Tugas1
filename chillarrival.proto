@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package chillarrival;
 
-// Menyatukan 3 Service sesuai Arsitektur di PPT
+// Menyatukan 3 Service 
 service ChillArrivalService {
   // 1. Unary: Instant Command (Nyalakan/Matikan AC)
   rpc SendCommand(CommandRequest) returns (CommandResponse);
@@ -40,4 +40,5 @@ message EnergyData {
 message EnergyAlert {
   string alert_message = 1;
   bool is_critical = 2;
+  float total_watt_used = 3;
 }

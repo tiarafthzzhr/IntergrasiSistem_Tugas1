@@ -4,15 +4,25 @@ const packageDef = protoLoader.loadSync("chillarrival.proto", {});
 const chillProto = grpc.loadPackageDefinition(packageDef).chillarrival;
 
 // State Management In-Memory
-const deviceStates = { "AC_LIVING": "OFF", "LAMP_KITCHEN": "OFF" };
+const deviceStates = { "AC_BEDROOM": "OFF", "AC_LIVING": "OFF", "LAMP_KITCHEN": "OFF" };
 const maintenanceDevices = ["AC_LIVING"]; // Simulasi AC sedang rusak
+
+// Daya tiap alat (Watt)
+const devicePowerRatings = {
+  "AC_BEDROOM": 850,
+  "AC_LIVING": 1200,
+  "LAMP_KITCHEN": 40
+};
+
+let totalEnergyWatt = 0;
 
 const server = new grpc.Server();
 
 server.addService(chillProto.ChillArrivalService.service, {
   // 1. Implementasi Unary 
   sendCommand: (call, callback) => {
-    const { deviceId, action } = call.request;
+    const deviceId = call.request.deviceId || call.request.device_id;
+    const action = call.request.action;
     console.log(`[Unary] Request: ${deviceId} -> ${action}`);
 
     // Error Handling: Safety Protocol 
@@ -44,14 +54,46 @@ server.addService(chillProto.ChillArrivalService.service, {
 
   // 3. Bi-directional Streaming (Eco-Analytics)
   monitorEnergy: (call) => {
-    console.log("[Bidi] Monitoring Energi dimulai.");
-    call.on('data', (data) => {
-      console.log(`[Log] Listrik ${data.deviceId}: ${data.watt}W`);
-      if (data.watt > 1000) {
-        call.write({ alertMessage: `BOROS! Matikan ${data.deviceId} sekarang!`, isCritical: true });
+    console.log("[Bidi] Sistem Energi Otomatis (Auto-Calculate) aktif.");
+    
+    // Server otomatis menghitung beban setiap detik berdasarkan deviceStates
+    const interval = setInterval(() => {
+      // Beban diam (Standby) rumah seperti Kulkas & Perangkat Pasif = 150W
+      let currentActiveWatt = 150; 
+      
+      for (const dev in deviceStates) {
+        if (deviceStates[dev] === "ON") {
+          currentActiveWatt += devicePowerRatings[dev] || 0;
+        }
       }
+      
+      // Akumulasikan energi (Simulasi dipercepat: Anggap pembacaan periodik menambah total daya konsumsi)
+      totalEnergyWatt += currentActiveWatt;
+      
+      let critical = currentActiveWatt > 1000;
+      let alertMsg = critical
+        ? `🔥 OVERLOAD! Beban listrik rumah sangat boros: ${currentActiveWatt}W!`
+        : `⚡ Efisien. Beban daya aktif saat ini: ${currentActiveWatt}W.`;
+
+      // Kirim hasil hitungan ke klien via Bidi stream
+      call.write({
+        alertMessage: alertMsg,
+        isCritical: critical,
+        totalWattUsed: totalEnergyWatt
+      });
+    }, 2000); // dihitung tiap 2 detik
+
+    call.on('data', (data) => {
+      console.log(`[Log] Ping Sinkronisasi diterima dari Front-End.`);
     });
-    call.on('end', () => call.end());
+
+    call.on('end', () => {
+      clearInterval(interval);
+      call.end();
+    });
+    call.on('cancelled', () => {
+      clearInterval(interval);
+    });
   }
 });
 

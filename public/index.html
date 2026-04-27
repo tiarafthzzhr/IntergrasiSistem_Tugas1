@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChillArrival - Smart Bedroom Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="background-effects">
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+    </div>
+
+    <main class="dashboard-container">
+        <header>
+            <div class="header-content">
+                <h1>ChillArrival <span>Dashboard</span></h1>
+                <p>Advanced Protocol & Connection Gateway</p>
+            </div>
+            <div class="connection-status">
+                <div id="ws-indicator" class="status-dot"></div>
+                <span id="ws-status-text">Disconnected</span>
+            </div>
+        </header>
+
+        <section class="grid-layout">
+            <!-- Feature 2: Event-Driven UI (Component 1 - Chart) -->
+            <div class="card glass-panel chart-panel">
+                <h2>Live Climate Tracking</h2>
+                <div class="chart-container">
+                    <canvas id="temperatureChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Feature 4: Command & Control Bridge & Feature 2 (Component 3 - Status Indicator) -->
+            <div class="card glass-panel control-panel">
+                <h2>Command & Control <span class="badge">Unary gRPC</span></h2>
+                
+                <div class="device-selector-wrapper">
+                    <label for="unary-device">Select Target Device:</label>
+                    <select id="unary-device" class="custom-select" onchange="updateDeviceUI()">
+                        <option value="AC_BEDROOM">AC Bedroom</option>
+                        <option value="AC_LIVING">AC Living Room (Maintenance Error Test)</option>
+                        <option value="LAMP_KITCHEN">Lamp Kitchen</option>
+                    </select>
+                </div>
+
+                <div class="device-status">
+                    <h3 id="device-status-title">AC_BEDROOM Status</h3>
+                    <div id="dynamic-status-indicator" class="status-badge off">OFF</div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="sendDynamicCommand('ON')">Turn ON</button>
+                    <button class="btn btn-danger" onclick="sendDynamicCommand('OFF')">Turn OFF</button>
+                </div>
+
+                <div class="separator"></div>
+
+                <h2>Live Power Monitor <span class="badge">Bidi gRPC</span></h2>
+                
+                <p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:1rem; line-height:1.4;">
+                   The Back-end core dynamically calculates live wattage based on the ON/OFF states of the devices above. <br/> <strong style="color:var(--accent-blue)">Click below to Start the Engine.</strong>
+                </p>
+
+                <div class="input-group">
+                    <button id="btn-monitor" class="btn btn-secondary" style="width:100%" onclick="startEnergyMonitor()">⚡ Activate Auto Energy Sync ⚡</button>
+                </div>
+                
+                <div class="energy-total-card">
+                    <div class="energy-total-label">Total Energy Consumed</div>
+                    <div class="energy-total-value">
+                        <span id="total-watt-counter">0</span><span class="energy-total-unit">W</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature 3: Server-Initiated Events & Feature 2 (Component 2 - Log) -->
+            <div class="card glass-panel logs-panel">
+                <div class="log-headers">
+                    <h2>System Feed & Logs</h2>
+                    <span class="live-badge">● Live</span>
+                </div>
+                <div id="activity-log" class="log-container">
+                    <!-- Logs will be populated here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Notification Toast -->
+        <div id="notification-container" class="toast-container"></div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
