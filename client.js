@@ -7,7 +7,6 @@ const client = new chillProto.ChillArrivalService('localhost:50051', grpc.creden
 
 // --- UNARY (Request-Response) ---
 console.log("\n--- UNARY RPC ---");
-// parameter sesuai dengan message CommandRequest di proto
 client.sendCommand({ deviceId: "LAMP_KITCHEN", action: "ON" }, (err, res) => {
   if (err) {
     console.error("Safety Protocol (Error):", err.details);
@@ -15,6 +14,20 @@ client.sendCommand({ deviceId: "LAMP_KITCHEN", action: "ON" }, (err, res) => {
     console.log("Server Response:", res.message);
   }
 });
+
+setTimeout(() => {
+  console.log("\n--- DEVICE INFO ---");
+  client.getDeviceInfo({ deviceId: "AC_BEDROOM" }, (err, info) => {
+    if (err) {
+      console.error("GetDeviceInfo Error:", err.details || err.message);
+      return;
+    }
+    const deviceName = info.deviceName || info.device_name;
+    const wattPerHour = info.wattPerHour || info.watt_per_hour;
+    const defaultDuration = info.defaultDurationMinutes || info.default_duration_minutes;
+    console.log(`Device Info: ${deviceName} (${info.category}) - Watt/jam: ${wattPerHour}, Durasi default: ${defaultDuration} menit`);
+  });
+}, 500);
 
 // --- SERVER STREAMING (Live Suhu) ---
 setTimeout(() => {
@@ -31,7 +44,6 @@ setTimeout(() => {
     }
   });
 
-  // Handler error supaya tidak crash saat dicancel
   stream.on('error', (err) => {
     if (err.code === grpc.status.CANCELLED) {
       console.log("Stream successfully closed by client.");
@@ -47,13 +59,34 @@ setTimeout(() => {
   const bidi = client.monitorEnergy();
 
   bidi.on('data', (alert) => {
-    console.log(">>> NOTIFIKASI:", alert.alertMessage);
+    console.log(`\x1b[33m[ENERGY ALERT]\x1b[0m ${alert.alertMessage || alert.alert_message}`);
+    const critical = alert.isCritical ?? alert.is_critical;
+    const energyValue = alert.energyKwh ?? alert.energy_kwh ?? 0;
+    const costValue = alert.estimatedCost ?? alert.estimated_cost ?? 0;
+    const actionValue = alert.recommendedAction || alert.recommended_action || "-";
+    console.log(`  - Critical: ${critical}`);
+    console.log(`  - Total Energy: ${energyValue.toFixed(4)} kWh`);
+    console.log(`  - Estimated Cost: Rp${costValue}`);
+    console.log(`  - Rekomendasi: ${actionValue}`);
   });
 
   bidi.on('error', (err) => console.log("Bidi Error:", err.message));
+  bidi.on('end', () => console.log("Streaming Energy Selesai."));
 
-  console.log("Sending power usage data...");
-  bidi.write({ deviceId: "AC_BEDROOM", watt: 450 });
-  bidi.write({ deviceId: "AC_BEDROOM", watt: 1150 }); // Memicu alert
-  bidi.end();
+  const reports = [
+    { deviceId: "AC_BEDROOM", watt: 850, duration_minutes: 90 },
+    { deviceId: "AC_BEDROOM", watt: 1150, duration_minutes: 120 },
+    { deviceId: "DISPENSER", watt: 600, duration_minutes: 30 }
+  ];
+
+  console.log("Mengirim laporan penggunaan daya ke server...");
+  reports.forEach((data, index) => {
+    setTimeout(() => {
+      console.log(`[CLIENT SEND] ${data.deviceId} - ${data.watt}W selama ${data.duration_minutes} menit`);
+      bidi.write(data);
+      if (index === reports.length - 1) {
+        setTimeout(() => bidi.end(), 1000);
+      }
+    }, index * 1800);
+  });
 }, 10000);

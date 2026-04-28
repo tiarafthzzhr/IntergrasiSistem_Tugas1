@@ -2,9 +2,9 @@ syntax = "proto3";
 
 package chillarrival;
 
-// Menyatukan 3 Service sesuai Arsitektur di PPT
+// Menyatukan layanan dengan dukungan metadata device dan perhitungan energi
 service ChillArrivalService {
-  // 1. Unary: Instant Command (Nyalakan/Matikan AC)
+  // 1. Unary: Instant Command (Nyalakan/Matikan device)
   rpc SendCommand(CommandRequest) returns (CommandResponse);
 
   // 2. Server Streaming: Live Climate Feed (Grafik Suhu)
@@ -12,6 +12,9 @@ service ChillArrivalService {
 
   // 3. Bi-directional Streaming: Eco-Analytics (Monitor Listrik)
   rpc MonitorEnergy(stream EnergyData) returns (stream EnergyAlert);
+
+  // 4. Unary: Device Metadata
+  rpc GetDeviceInfo(DeviceRequest) returns (DeviceInfo);
 }
 
 message Empty {}
@@ -35,9 +38,27 @@ message ClimateData {
 message EnergyData {
   string device_id = 1;
   float watt = 2;
+  float duration_minutes = 3;
 }
 
 message EnergyAlert {
   string alert_message = 1;
   bool is_critical = 2;
+  float energy_kwh = 3;
+  float estimated_cost = 4;
+  string recommended_action = 5;
+}
+
+message DeviceRequest {
+  string device_id = 1;
+}
+
+message DeviceInfo {
+  string device_id = 1;
+  string device_name = 2;
+  string category = 3;
+  float watt_per_hour = 4;
+  float watt_per_minute = 5;
+  float default_duration_minutes = 6;
+  string note = 7;
 }
