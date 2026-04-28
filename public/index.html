@@ -44,7 +44,6 @@
                     <label for="unary-device">Select Target Device:</label>
                     <select id="unary-device" class="custom-select" onchange="updateDeviceUI()">
                         <option value="AC_BEDROOM">AC Bedroom</option>
-                        <option value="AC_LIVING">AC Living Room (Maintenance Error Test)</option>
                         <option value="LAMP_KITCHEN">Lamp Kitchen</option>
                     </select>
                 </div>
@@ -63,17 +62,28 @@
                 <h2>Live Power Monitor <span class="badge">Bidi gRPC</span></h2>
                 
                 <p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:1rem; line-height:1.4;">
-                   The Back-end core dynamically calculates live wattage based on the ON/OFF states of the devices above. <br/> <strong style="color:var(--accent-blue)">Click below to Start the Engine.</strong>
+                   Nyalakan device lalu aktifkan Energy Sync untuk tracking pemakaian listrik secara real-time. <br/>
+                   <strong style="color:var(--accent-blue)">Sistem akan alert ketika mencapai batas kWh!</strong>
                 </p>
 
                 <div class="input-group">
                     <button id="btn-monitor" class="btn btn-secondary" style="width:100%" onclick="startEnergyMonitor()">⚡ Activate Auto Energy Sync ⚡</button>
                 </div>
                 
+                <!-- Energy Cards Container -->
+                <div id="energy-cards-container">
+                    <!-- Cards will be injected dynamically per device -->
+                </div>
+
+                <!-- Overall Summary -->
                 <div class="energy-total-card">
-                    <div class="energy-total-label">Total Energy Consumed</div>
+                    <div class="energy-total-label">Total Estimasi Biaya Listrik</div>
                     <div class="energy-total-value">
-                        <span id="total-watt-counter">0</span><span class="energy-total-unit">W</span>
+                        <span style="font-size:1.5rem; margin-right:0.25rem;">Rp</span>
+                        <span id="total-cost-counter">0</span>
+                    </div>
+                    <div style="margin-top:0.75rem; font-size:0.85rem; color:var(--text-secondary);">
+                        Total kWh: <span id="total-kwh-counter" style="color:var(--accent-green); font-weight:600;">0.0000</span> kWh
                     </div>
                 </div>
             </div>

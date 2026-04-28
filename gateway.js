@@ -22,20 +22,17 @@ io.on('connection', (socket) => {
     console.log('🔗 Browser Front-end Connected UI:', socket.id);
 
     // SERVER-INITIATED EVENT: Push data without client request
-    // We start the climate data gRPC stream as soon as client connects
-    // and push data to the frontend automatically.
     const climateStream = grpcClient.streamClimateData({});
     
     climateStream.on('data', (data) => {
-        // Forwarding to websocket
         socket.emit('climate_data', data);
     });
 
     climateStream.on('error', (err) => {
-        console.error('gRPC stream error:', err);
+        console.error('gRPC stream error:', err.message);
     });
 
-    // Also send a server-initiated alert periodically
+    // Server-initiated alert periodically
     const alertInterval = setInterval(() => {
         const events = [
             "System check: Servers running optimally.",
@@ -45,10 +42,9 @@ io.on('connection', (socket) => {
         ];
         const randomEvent = events[Math.floor(Math.random() * events.length)];
         socket.emit('server_alert', { message: randomEvent, timestamp: new Date().toLocaleTimeString() });
-    }, 15000); // every 15 seconds
+    }, 15000);
 
     // COMMAND & CONTROL BRIDGE
-    // 1. Unary Command from Frontend -> gRPC
     socket.on('send_command_to_grpc', (payload) => {
         console.log(`[Bridge] Instructions from UI: ${payload.deviceId} -> ${payload.action}`);
         grpcClient.sendCommand({ deviceId: payload.deviceId, action: payload.action }, (err, res) => {
@@ -60,21 +56,36 @@ io.on('connection', (socket) => {
         });
     });
 
-    // 2. Bi-directional Streaming from Frontend -> gRPC
+    // Bi-directional Streaming for Energy Monitoring
     let bidiStream = null;
     
     socket.on('start_energy_sync', () => {
         if (!bidiStream) {
             bidiStream = grpcClient.monitorEnergy();
             bidiStream.on('data', (alert) => {
-                socket.emit('energy_alert', alert);
+                // Proto-loader converts snake_case to camelCase automatically
+                // So device_id -> deviceId, alert_message -> alertMessage, etc.
+                console.log(`[Energy Data] deviceId=${alert.deviceId}, kwh=${alert.energyKwh}, cost=${alert.estimatedCost}`);
+                socket.emit('energy_alert', {
+                    alertMessage: alert.alertMessage,
+                    isCritical: alert.isCritical,
+                    energyKwh: alert.energyKwh,
+                    estimatedCost: alert.estimatedCost,
+                    recommendedAction: alert.recommendedAction,
+                    deviceId: alert.deviceId,
+                    deviceName: alert.deviceName,
+                    runningMinutes: alert.runningMinutes,
+                    wattPerHour: alert.wattPerHour,
+                    thresholdKwh: alert.thresholdKwh,
+                    isSummary: alert.isSummary || false
+                });
             });
             bidiStream.on('error', (err) => {
-                console.error('Bidi Stream Error:', err);
+                console.error('Bidi Stream Error:', err.message);
                 bidiStream = null;
             });
             bidiStream.write({ deviceId: 'SYSTEM_SYNC', watt: 0 });
-            socket.emit('activity_log', `Bidi Energy Stream Started`);
+            socket.emit('activity_log', `Energy Monitoring Engine Activated`);
         }
     });
 
@@ -82,7 +93,7 @@ io.on('connection', (socket) => {
         if (bidiStream) {
             bidiStream.end();
             bidiStream = null;
-            socket.emit('activity_log', `Bidi Energy Stream Stopped`);
+            socket.emit('activity_log', `Energy Monitoring Engine Stopped`);
         }
     });
 

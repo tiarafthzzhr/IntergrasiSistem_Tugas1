@@ -47,6 +47,12 @@ message EnergyAlert {
   float energy_kwh = 3;
   float estimated_cost = 4;
   string recommended_action = 5;
+  string device_id = 6;
+  string device_name = 7;
+  float running_minutes = 8;
+  float watt_per_hour = 9;
+  float threshold_kwh = 10;
+  bool is_summary = 11;
 }
 
 message DeviceRequest {

@@ -450,6 +450,23 @@ h2 {
 .toast-content h4 { margin-bottom: 0.25rem; font-size: 1rem; }
 .toast-content p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; }
 
+@keyframes pulse-border {
+    0% { border-color: rgba(239, 68, 68, 0.3); box-shadow: 0 0 5px rgba(239, 68, 68, 0.1); }
+    50% { border-color: rgba(239, 68, 68, 0.8); box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
+    100% { border-color: rgba(239, 68, 68, 0.3); box-shadow: 0 0 5px rgba(239, 68, 68, 0.1); }
+}
+
+.device-energy-card.threshold-exceeded {
+    animation: pulse-border 1.5s infinite;
+}
+
+#energy-cards-container {
+    max-height: 350px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.2) transparent;
+}
+
 @media (max-width: 1024px) {
     .grid-layout { grid-template-columns: 1fr; }
     .chart-panel { grid-column: 1 / -1; grid-row: auto; min-height: 400px; }
