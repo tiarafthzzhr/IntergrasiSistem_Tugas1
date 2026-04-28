@@ -1,6 +1,6 @@
 const socket = io();
 
-// 1. WebSocket Connection Status Indicator
+// 1. Indikator Status Koneksi WebSocket
 const wsIndicator = document.getElementById('ws-indicator');
 const wsStatusText = document.getElementById('ws-status-text');
 
@@ -16,7 +16,7 @@ socket.on('disconnect', () => {
     addLog('System', 'Lost connection to Gateway', 'alert');
 });
 
-// 2. Chart.js Setup for Streaming Climate Data (Feature 1 & 2)
+// 2. Pengaturan Chart.js untuk Data Cuaca Streaming 
 const ctx = document.getElementById('temperatureChart').getContext('2d');
 
 // Gradient colors
@@ -68,7 +68,7 @@ const myChart = new Chart(ctx, chartConfig);
 
 const maxDataPoints = 15;
 
-// Handling Climate Data from Server
+// Data Cuaca dari Server
 socket.on('climate_data', (data) => {
     if(myChart.data.labels.length > maxDataPoints) {
         myChart.data.labels.shift();
@@ -80,13 +80,13 @@ socket.on('climate_data', (data) => {
     myChart.update();
 });
 
-// 3. Server-Initiated Events (Feature 3)
+// 3. Event yang Diinisiasi Server 
 socket.on('server_alert', (data) => {
     addLog('Server Broadcast', data.message, 'server');
     showToast('📣 Server Broadcast', data.message);
 });
 
-// === ENERGY TRACKING STATE ===
+// === STATUS PELACAKAN ENERGI ===
 const deviceEnergyData = {}; // { deviceId: { kwh, cost, minutes, watt, threshold, name } }
 
 socket.on('energy_alert', (alert) => {
@@ -94,7 +94,7 @@ socket.on('energy_alert', (alert) => {
     
     if (!deviceId || deviceId === 'SYSTEM_SYNC') return;
 
-    // Store/update energy data per device
+    // Simpan serta perbarui data energi per perangkat
     deviceEnergyData[deviceId] = {
         kwh: alert.energyKwh || 0,
         cost: alert.estimatedCost || 0,
@@ -116,11 +116,11 @@ socket.on('energy_alert', (alert) => {
         addLog('⚡ Energy Alert', alert.alertMessage, 'alert');
     }
 
-    // Show summary when device turned OFF
+    // Menampilkan ringkasan saat perangkat DIMATIKAN
     if (alert.isSummary) {
         showToast('📊 Ringkasan Pemakaian', alert.alertMessage, false);
         addLog('📊 Summary', alert.alertMessage, 'success');
-        // Remove this device from active tracking after showing summary
+        // Bagian menghapus perangkat ini dari pelacakan aktif setelah menampilkan ringkasan
         setTimeout(() => {
             delete deviceEnergyData[deviceId];
             renderEnergyCards();
@@ -221,7 +221,7 @@ function updateTotalCounters() {
 }
 
 
-// Local UI State tracking
+// Pelacakan Status UI Lokal
 const uiDeviceStates = {
     'AC_BEDROOM': 'OFF',
     'AC_LIVING': 'OFF',
@@ -249,7 +249,7 @@ function sendDynamicCommand(action) {
     sendCommand(device, action);
 }
 
-// 4. Command & Control Bridge (Feature 4)
+// 4. Kontrol
 function sendCommand(device, action) {
     socket.emit('send_command_to_grpc', { deviceId: device, action: action });
     addLog('Command Sent', `Set ${device} to ${action}`, 'log-item');
@@ -260,7 +260,7 @@ socket.on('command_response', (response) => {
         addLog('Command Result', response.message, 'success');
         showToast('✅ Success', response.message);
         
-        // Update local state and refresh UI dynamically
+        // Update local state dan refresh UI dynamically
         uiDeviceStates[response.device] = response.action;
         
         const selectedDevice = document.getElementById('unary-device').value;
@@ -302,7 +302,7 @@ socket.on('activity_log', (msg) => {
 });
 
 
-// Utility Functions (Logs and Toasts)
+// Fungsi Utilitas (Log dan Toast)
 function addLog(title, desc, typeClass) {
     const logContainer = document.getElementById('activity-log');
     
@@ -314,7 +314,7 @@ function addLog(title, desc, typeClass) {
     
     logContainer.prepend(div);
     
-    // Kept to latest 30 logs
+    // Disimpan dalam 30 log terbaru
     if (logContainer.children.length > 30) {
         logContainer.removeChild(logContainer.lastChild);
     }
@@ -344,6 +344,6 @@ function showToast(title, message, isError = false) {
     }, 5000);
 }
 
-// Initialize UI state
+// Inisialisasi status UI
 updateDeviceUI();
 renderEnergyCards();

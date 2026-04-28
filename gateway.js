@@ -21,7 +21,7 @@ app.use(express.static('public'));
 io.on('connection', (socket) => {
     console.log('🔗 Browser Front-end Connected UI:', socket.id);
 
-    // SERVER-INITIATED EVENT: Push data without client request
+    // SERVER-INITIATED EVENT: Mengirim data secara otomatis 
     const climateStream = grpcClient.streamClimateData({});
     
     climateStream.on('data', (data) => {
@@ -32,7 +32,7 @@ io.on('connection', (socket) => {
         console.error('gRPC stream error:', err.message);
     });
 
-    // Server-initiated alert periodically
+    // Menjalankan alert dari server secara berkala
     const alertInterval = setInterval(() => {
         const events = [
             "System check: Servers running optimally.",
@@ -44,7 +44,7 @@ io.on('connection', (socket) => {
         socket.emit('server_alert', { message: randomEvent, timestamp: new Date().toLocaleTimeString() });
     }, 15000);
 
-    // COMMAND & CONTROL BRIDGE
+    // KOMANDO & KONTROL
     socket.on('send_command_to_grpc', (payload) => {
         console.log(`[Bridge] Instructions from UI: ${payload.deviceId} -> ${payload.action}`);
         grpcClient.sendCommand({ deviceId: payload.deviceId, action: payload.action }, (err, res) => {
@@ -56,15 +56,15 @@ io.on('connection', (socket) => {
         });
     });
 
-    // Bi-directional Streaming for Energy Monitoring
+    // Bi-directional Streaming untuk Pemantauan Energi
     let bidiStream = null;
     
     socket.on('start_energy_sync', () => {
         if (!bidiStream) {
             bidiStream = grpcClient.monitorEnergy();
             bidiStream.on('data', (alert) => {
-                // Proto-loader converts snake_case to camelCase automatically
-                // So device_id -> deviceId, alert_message -> alertMessage, etc.
+                // Proto-loader mengonversi snake_case menjadi camelCase secara otomatis
+                // Sehingga device_id -> deviceId, alert_message -> alertMessage, dll.
                 console.log(`[Energy Data] deviceId=${alert.deviceId}, kwh=${alert.energyKwh}, cost=${alert.estimatedCost}`);
                 socket.emit('energy_alert', {
                     alertMessage: alert.alertMessage,

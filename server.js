@@ -6,7 +6,7 @@ const chillProto = grpc.loadPackageDefinition(packageDef).chillarrival;
 
 const pricePerKwh = 1500; // Tarif listrik IDR/kWh
 
-// === DEVICE SPECS (watt per jam) ===
+// === SPESIFIKASI PERANGKAT (watt per jam) ===
 const deviceSpecs = {
   "AC_BEDROOM": {
     deviceName: "AC Kamar Tidur",
@@ -38,23 +38,23 @@ const deviceSpecs = {
   }
 };
 
-// === RUNTIME STATE ===
+// === STATUS SAAT BERJALAN (RUNTIME STATE) ===
 const deviceStates = {};        // { "AC_BEDROOM": "ON" | "OFF" }
 const deviceTimers = {};        // { "AC_BEDROOM": intervalId }
 const deviceAccumulatedKwh = {}; // { "AC_BEDROOM": 0.0234 }
 const deviceStartTimes = {};    // { "AC_BEDROOM": Date }
 const maintenanceDevices = ["AC_LIVING"];
 
-// All connected bidi streams — so we can push energy updates to all
+// Semua aliran bidi yang terhubung — (pembaruan energi)
 const activeBidiStreams = new Set();
 
-// Initialize all devices to OFF
+// Inisialisasi semua perangkat ke status OFF
 Object.keys(deviceSpecs).forEach(id => {
   deviceStates[id] = "OFF";
   deviceAccumulatedKwh[id] = 0;
 });
 
-// === HELPER FUNCTIONS ===
+// === FUNGSI-FUNGSI ===
 function getDeviceSpec(deviceId) {
   return deviceSpecs[deviceId] || null;
 }
@@ -85,7 +85,7 @@ function broadcastEnergyUpdate(deviceId) {
     energyKwh: parseFloat(kwh.toFixed(4)),
     estimatedCost: cost,
     recommendedAction,
-    // Extra fields for the gateway to use (proto will ignore unknown fields gracefully)
+    // Kolom tambahan yang digunakan oleh gateway (proto akan mengabaikan kolom tidak dikenal)
     deviceId: deviceId,
     deviceName: spec.deviceName,
     runningMinutes: parseFloat(runningMinutes),
@@ -95,12 +95,12 @@ function broadcastEnergyUpdate(deviceId) {
 
   console.log(`[Energy] ${deviceId} | ${kwh.toFixed(4)} kWh | Rp${cost} | ${runningMinutes}m${isCritical ? ' ⚠️ OVER THRESHOLD' : ''}`);
 
-  // Push to all connected bidi streams
+  // push ke semua aliran bidi yang terhubung
   activeBidiStreams.forEach(stream => {
     try {
       stream.write(payload);
     } catch (e) {
-      // Stream closed, will be cleaned up
+      // Aliran ditutup
     }
   });
 }
@@ -109,17 +109,17 @@ function startEnergyTracking(deviceId) {
   const spec = getDeviceSpec(deviceId);
   if (!spec) return;
 
-  // Reset accumulator
+  // Setel ulang akumulator
   deviceAccumulatedKwh[deviceId] = 0;
   deviceStartTimes[deviceId] = new Date();
 
-  // Calculate kWh increment per second: wattPerHour / 3600 / 1000
+  // Menghitung kenaikan kWh per detik: wattPerHour / 3600 / 1000
   const kwhPerSecond = spec.wattPerHour / 3600 / 1000;
 
-  // Update every 2 seconds
+  // Perbarui setiap 2 detik
   deviceTimers[deviceId] = setInterval(() => {
     if (deviceStates[deviceId] === "ON") {
-      deviceAccumulatedKwh[deviceId] += kwhPerSecond * 2; // 2 seconds interval
+      deviceAccumulatedKwh[deviceId] += kwhPerSecond * 2; // interval 2 detik
       broadcastEnergyUpdate(deviceId);
     }
   }, 2000);
@@ -141,7 +141,7 @@ function stopEnergyTracking(deviceId) {
 
   console.log(`[Tracker] Stopped ${deviceId} | Total: ${kwh.toFixed(4)} kWh | Rp${cost} | ${runningMinutes}m`);
 
-  // Send final summary
+  // Kirim ringkasan akhir (keterangan penggunaan device)
   const payload = {
     alertMessage: `📊 RINGKASAN: ${spec ? spec.deviceName : deviceId} dimatikan. Total pemakaian: ${kwh.toFixed(4)} kWh selama ${runningMinutes} menit. Estimasi biaya: Rp${cost.toLocaleString()}`,
     isCritical: false,
@@ -160,12 +160,12 @@ function stopEnergyTracking(deviceId) {
     try { stream.write(payload); } catch (e) {}
   });
 
-  // Reset
+  // Setel ulang
   deviceAccumulatedKwh[deviceId] = 0;
   delete deviceStartTimes[deviceId];
 }
 
-// === gRPC SERVER ===
+// === SERVER gRPC ===
 const server = new grpc.Server();
 
 server.addService(chillProto.ChillArrivalService.service, {
@@ -184,7 +184,7 @@ server.addService(chillProto.ChillArrivalService.service, {
     const prevState = deviceStates[deviceId];
     deviceStates[deviceId] = action;
 
-    // Start/stop energy tracking based on action
+    // Mulai/hentikan pelacakan energi 
     if (action === "ON" && prevState !== "ON") {
       startEnergyTracking(deviceId);
     } else if (action === "OFF" && prevState === "ON") {
@@ -213,10 +213,10 @@ server.addService(chillProto.ChillArrivalService.service, {
   monitorEnergy: (call) => {
     console.log("[Bidi] Energy stream connected.");
 
-    // Register this stream for broadcasts
+    // Daftarkan aliran ini untuk siaran
     activeBidiStreams.add(call);
 
-    // Send initial state of all active devices
+    // Kirim status awal semua perangkat aktif
     Object.keys(deviceStates).forEach(deviceId => {
       if (deviceStates[deviceId] === "ON") {
         broadcastEnergyUpdate(deviceId);
@@ -224,7 +224,7 @@ server.addService(chillProto.ChillArrivalService.service, {
     });
 
     call.on('data', (data) => {
-      // Client can also send manual energy data if needed
+      
       const deviceId = data.deviceId || data.device_id;
       if (deviceId && deviceId !== 'SYSTEM_SYNC') {
         console.log(`[Bidi] Manual data from client: ${deviceId} ${data.watt}W`);
@@ -270,7 +270,7 @@ server.addService(chillProto.ChillArrivalService.service, {
   }
 });
 
-// === API to get all device states (for gateway) ===
+// === API untuk mendapatkan semua status perangkat (untuk gateway) ===
 const statusPort = 3001;
 let activeGrpcPort = 50051;
 
