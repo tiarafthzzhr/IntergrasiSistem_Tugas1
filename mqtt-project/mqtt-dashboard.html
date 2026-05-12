@@ -524,26 +524,27 @@
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-top:0.5rem;">
 
                 <div style="background:rgba(0,0,0,0.2); border-radius:10px; padding:1rem; border-left: 3px solid #f59e0b;">
-                    <div style="font-weight:bold; color:#fde047; margin-bottom:0.4rem;">⏱ Message Expiry Interval</div>
+                    <div style="font-weight:bold; color:#fde047; margin-bottom:0.4rem;">⏱ Message Expiry</div>
                     <div style="font-size:0.85rem; color:#94a3b8; line-height:1.6;">
-                        Data suhu otomatis <b style="color:#f8fafc;">kadaluarsa dalam 10 detik</b> di broker.
-                        Kalau subscriber telat connect, dia tidak akan terima data suhu yang sudah basi.
+                        Publisher menyisipkan field <code>expiresAt</code> di setiap payload suhu.
+                        Subscriber cek field ini — kalau sudah lewat 10 detik, data <b style="color:#f8fafc;">langsung diabaikan</b>.
                     </div>
-                    <div style="font-size:0.75rem; color:#64748b; margin-top:0.5rem;">📍 publisher-suhu.js</div>
+                    <div style="font-size:0.75rem; color:#64748b; margin-top:0.5rem;">📍 publisher-suhu.js + subscriber-alert.js</div>
                 </div>
 
                 <div style="background:rgba(0,0,0,0.2); border-radius:10px; padding:1rem; border-left: 3px solid #10b981;">
                     <div style="font-weight:bold; color:#6ee7b7; margin-bottom:0.4rem;">🔀 Shared Subscription</div>
                     <div style="font-size:0.85rem; color:#94a3b8; line-height:1.6;">
-                        subscriber-logger pakai <b style="color:#f8fafc;">$share/loggers/</b>. Kalau ada 2 instance logger jalan bersamaan, broker <b style="color:#f8fafc;">bagi pesan rata</b> ke keduanya (load balancing).
+                        Format topik: <code>$share/loggers/chillarrival/#</code><br>
+                        Kalau 2 instance logger jalan bersamaan, broker <b style="color:#f8fafc;">bagi pesan rata</b> ke keduanya. Coba jalankan <code>subscriber-logger.js</code> dua kali!
                     </div>
                     <div style="font-size:0.75rem; color:#64748b; margin-top:0.5rem;">📍 subscriber-logger.js</div>
                 </div>
 
                 <div style="background:rgba(0,0,0,0.2); border-radius:10px; padding:1rem; border-left: 3px solid #ef4444;">
-                    <div style="font-weight:bold; color:#fca5a5; margin-bottom:0.4rem;">🚦 Receive Maximum (Flow Control)</div>
+                    <div style="font-weight:bold; color:#fca5a5; margin-bottom:0.4rem;">🚦 Flow Control (Receive Max)</div>
                     <div style="font-size:0.85rem; color:#94a3b8; line-height:1.6;">
-                        subscriber-alert batasi maksimal <b style="color:#f8fafc;">10 pesan QoS 1 in-flight</b> sekaligus. Broker tidak kirim pesan ke-11 sebelum salah satu dari 10 selesai di-acknowledge.
+                        subscriber-alert punya antrian internal. Maksimal <b style="color:#f8fafc;">10 pesan diproses bersamaan</b> — pesan ke-11 masuk antrian dulu sampai salah satu selesai.
                     </div>
                     <div style="font-size:0.75rem; color:#64748b; margin-top:0.5rem;">📍 subscriber-alert.js</div>
                 </div>
@@ -555,12 +556,8 @@
 
     <script>
         const client = mqtt.connect('ws://localhost:8883', {
-            protocolVersion: 5,
             keepalive: 30,
-            reconnectPeriod: 2000,
-            properties: {
-                receiveMaximum: 20
-            }
+            reconnectPeriod: 2000
         });
 
         let costAC = 0;

@@ -6,7 +6,8 @@ echo.
 echo Membuka semua komponen MQTT di terminal terpisah...
 echo.
 
-:: 1. Broker (harus pertama)
+:: 1. Broker
+
 start "MQTT Broker" cmd /k "cd /d "%~dp0" && node broker.js"
 timeout /t 2 /nobreak >nul
 
