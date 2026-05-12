@@ -83,7 +83,7 @@
             box-shadow: 0 0 10px var(--accent-green);
         }
 
-        /* --- PERBAIKAN GRID LAYOUT & VARIASI HORIZONTAL --- */
+        /* --- GRID LAYOUT & VARIASI HORIZONTAL --- */
         .dashboard {
             display: grid;
             grid-template-columns: 1fr;
@@ -96,15 +96,15 @@
 
         @media (min-width: 768px) {
             .dashboard {
-                grid-template-columns: 1fr 1fr; /* Membentuk 2 kolom untuk AC & Lampu */
+                grid-template-columns: 1fr 1fr;
             }
             
-            /* Menarik card horizontal agar full width */
+            /* card horizontal(full width) */
             .total-panel, .system-card, .card-suhu, .card-alert { 
                 grid-column: 1 / -1; 
             }
 
-            /* 1. Variasi Total Tagihan (Langsing/Slim) */
+            /* 1. Variasi Total Tagihan  */
             .total-panel {
                 padding: 1.5rem 2.5rem;
             }
@@ -114,7 +114,7 @@
                 align-items: center;
             }
 
-            /* 2. Variasi Status Hub IoT (Tengah, Kiri Teks, Kanan Tombol Tumpuk) */
+            /* 2. Variasi Status Hub IoT  */
             .sys-content {
                 flex-direction: row !important;
                 align-items: center;
@@ -133,7 +133,8 @@
                 min-width: 220px;
             }
 
-            /* 3. Variasi Suhu Ruangan (Tinggi, Teks Besar Kiri, Teks Kecil Kanan) */
+            /* 3. Variasi Suhu Ruangan */
+ 
             .card-suhu {
                 padding: 2rem 2.5rem;
             }
@@ -157,7 +158,7 @@
                 text-align: right;
             }
 
-            /* 4. Variasi Alert (Bawah, Teks Sejajar Kiri Kanan) */
+            /* 4. Variasi Alert */
             .card-alert .card-content {
                 flex-direction: row;
                 align-items: center;
@@ -411,7 +412,7 @@
                         <path fill="url(#ceramic)" d="M12 2C10.3 2 9 3.3 9 5V14.3C7.8 15.1 7 16.5 7 18C7 20.8 9.2 23 12 23C14.8 23 17 20.8 17 18C17 16.5 16.2 15.1 15 14.3V5C15 3.3 13.7 2 12 2ZM13 18C13 18.6 12.6 19 12 19C11.4 19 11 18.6 11 18V10C11 9.4 11.4 9 12 9C12.6 9 13 9.4 13 10V18Z"/>
                     </svg> Suhu Ruangan
                 </div>
-                <div class="mqtt-feature" style="background:rgba(245,158,11,0.25);color:#fde047;">QoS 0</div>
+                <div class="mqtt-feature" style="background:rgba(245,158,11,0.25);color:#fde047;">QoS 0 · Expire 10s</div>
             </div>
             <div class="card-content suhu-content">
                 <div class="suhu-stats">
@@ -501,7 +502,7 @@
                         <path fill="url(#bell)" d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.9 22 12 22ZM18 16V11C18 7.93 16.36 5.36 13.5 4.68V4C13.5 3.17 12.83 2.5 12 2.5C11.17 2.5 10.5 3.17 10.5 4V4.68C7.63 5.36 6 7.92 6 11V16L4 18V19H20V19H20V18L18 16Z"/>
                     </svg> Notifikasi Alert
                 </div>
-                <div class="mqtt-feature" style="background:rgba(245,158,11,0.25);color:#fde047;">QoS 1</div>
+                <div class="mqtt-feature" style="background:rgba(245,158,11,0.25);color:#fde047;">QoS 1 · Flow Max 10</div>
             </div>
             <div class="card-content">
                 <div class="alert-info">
@@ -514,12 +515,52 @@
             </div>
         </div>
 
+        <!-- MQTT 5.0 Features Panel -->
+        <div class="energy-card" style="grid-column: 1 / -1; border-color: rgba(139,92,246,0.4); background: rgba(139,92,246,0.05);">
+            <div class="card-header">
+                <div class="card-title" style="color:#a78bfa;">⚡ Fitur MQTT 5.0 yang Digunakan</div>
+                <div class="mqtt-feature" style="background:rgba(139,92,246,0.2);color:#a78bfa;">MQTT v5.0</div>
+            </div>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-top:0.5rem;">
+
+                <div style="background:rgba(0,0,0,0.2); border-radius:10px; padding:1rem; border-left: 3px solid #f59e0b;">
+                    <div style="font-weight:bold; color:#fde047; margin-bottom:0.4rem;">⏱ Message Expiry Interval</div>
+                    <div style="font-size:0.85rem; color:#94a3b8; line-height:1.6;">
+                        Data suhu otomatis <b style="color:#f8fafc;">kadaluarsa dalam 10 detik</b> di broker.
+                        Kalau subscriber telat connect, dia tidak akan terima data suhu yang sudah basi.
+                    </div>
+                    <div style="font-size:0.75rem; color:#64748b; margin-top:0.5rem;">📍 publisher-suhu.js</div>
+                </div>
+
+                <div style="background:rgba(0,0,0,0.2); border-radius:10px; padding:1rem; border-left: 3px solid #10b981;">
+                    <div style="font-weight:bold; color:#6ee7b7; margin-bottom:0.4rem;">🔀 Shared Subscription</div>
+                    <div style="font-size:0.85rem; color:#94a3b8; line-height:1.6;">
+                        subscriber-logger pakai <b style="color:#f8fafc;">$share/loggers/</b>. Kalau ada 2 instance logger jalan bersamaan, broker <b style="color:#f8fafc;">bagi pesan rata</b> ke keduanya (load balancing).
+                    </div>
+                    <div style="font-size:0.75rem; color:#64748b; margin-top:0.5rem;">📍 subscriber-logger.js</div>
+                </div>
+
+                <div style="background:rgba(0,0,0,0.2); border-radius:10px; padding:1rem; border-left: 3px solid #ef4444;">
+                    <div style="font-weight:bold; color:#fca5a5; margin-bottom:0.4rem;">🚦 Receive Maximum (Flow Control)</div>
+                    <div style="font-size:0.85rem; color:#94a3b8; line-height:1.6;">
+                        subscriber-alert batasi maksimal <b style="color:#f8fafc;">10 pesan QoS 1 in-flight</b> sekaligus. Broker tidak kirim pesan ke-11 sebelum salah satu dari 10 selesai di-acknowledge.
+                    </div>
+                    <div style="font-size:0.75rem; color:#64748b; margin-top:0.5rem;">📍 subscriber-alert.js</div>
+                </div>
+
+            </div>
+        </div>
+
     </div>
 
     <script>
         const client = mqtt.connect('ws://localhost:8883', {
+            protocolVersion: 5,
             keepalive: 30,
-            reconnectPeriod: 2000
+            reconnectPeriod: 2000,
+            properties: {
+                receiveMaximum: 20
+            }
         });
 
         let costAC = 0;

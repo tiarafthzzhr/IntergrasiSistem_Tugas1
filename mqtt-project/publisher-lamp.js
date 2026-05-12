@@ -19,7 +19,7 @@ let isON = false;
 client.on('connect', () => {
     console.log('[Lamp Kitchen] Sensor Energi Terhubung.');
 
-    // Kabari broker bahwa perangkat ini ONLINE
+    // informasi tentang  broker bahwa perangkat ini ONLINE
     client.publish('chillarrival/status/LAMP_KITCHEN', 'ONLINE', { retain: true });
 
     client.subscribe('chillarrival/command/LAMP_KITCHEN');

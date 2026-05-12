@@ -1,17 +1,22 @@
 const mqtt = require('mqtt');
 
-// Subscriber ke-2: Sistem Alert & Monitoring
-// Bertugas memantau kondisi abnormal dan mengirim peringatan balik ke broker
+// MQTT 5.0 — mengaktifkan fitur receiveMaximum (flow control)
 const client = mqtt.connect('mqtt://localhost:1883', {
-    clientId: 'alert_monitor_' + Math.random().toString(16).substr(2, 8)
+    clientId: 'alert_monitor_' + Math.random().toString(16).substr(2, 8),
+    protocolVersion: 5,
+    properties: {
+        // FLOW MAX: maksimal 10 pesan QoS 1/2 boleh "in-flight" sekaligus
+        // broker tidak akan kirim pesan ke-11 sebelum salah satu dari 10 selesai di-acknowledge
+        receiveMaximum: 10
+    }
 });
 
-const SUHU_BATAS = 28.5; // Batas suhu untuk memicu alert (derajat Celsius)
+const SUHU_BATAS = 28.5;
 
 client.on('connect', () => {
-    console.log('[Alert Monitor] Terhubung ke broker. Memantau kondisi sistem...');
+    console.log('[Alert Monitor] Terhubung ke broker (MQTT 5.0).');
+    console.log('[Alert Monitor] Flow Control aktif: receiveMaximum = 10\n');
 
-    // Subscribe dengan QoS 1 (At least once) - penting agar alert tidak terlewat
     client.subscribe('chillarrival/sensor/suhu', { qos: 1 });
     client.subscribe('chillarrival/system/status', { qos: 1 });
     client.subscribe('chillarrival/energy/+', { qos: 1 });
@@ -32,26 +37,25 @@ client.on('message', (topic, message) => {
                     pesan: `Suhu ruangan terlalu tinggi: ${suhu}°C (batas: ${SUHU_BATAS}°C)`,
                     waktu: timestamp
                 });
-                // Publish alert dengan QoS 1 agar pasti terkirim ke dashboard
                 client.publish('chillarrival/alert', alertMsg, { qos: 1 });
                 console.log(`[${timestamp}] ⚠️  ALERT SUHU TINGGI: ${suhu}°C`);
             } else {
                 console.log(`[${timestamp}] ✅ Suhu normal: ${suhu}°C`);
             }
-        } catch (e) { /* skip invalid JSON */ }
+        } catch (e) { }
     }
 
     else if (topic === 'chillarrival/system/status') {
         if (msg.includes('OFFLINE') || msg.includes('CRITICAL')) {
             const alertMsg = JSON.stringify({
                 level: 'CRITICAL',
-                pesan: `Sistem Induk tidak merespons! Status: ${msg}`,
+                pesan: `Hub IoT tidak merespons! Status: ${msg}`,
                 waktu: timestamp
             });
             client.publish('chillarrival/alert', alertMsg, { qos: 1, retain: true });
             console.log(`[${timestamp}] 🚨 ALERT SISTEM: ${msg}`);
         } else {
-            console.log(`[${timestamp}] ✅ Sistem Induk: ${msg}`);
+            console.log(`[${timestamp}] ✅ Hub IoT: ${msg}`);
         }
     }
 
@@ -59,9 +63,9 @@ client.on('message', (topic, message) => {
         try {
             const data = JSON.parse(msg);
             if (data.cost > 5000) {
-                console.log(`[${timestamp}] 💰 Biaya ${data.deviceName} sudah mencapai Rp ${data.cost.toLocaleString('id-ID')}`);
+                console.log(`[${timestamp}] 💰 Biaya ${data.deviceName}: Rp ${data.cost.toLocaleString('id-ID')}`);
             }
-        } catch (e) { /* skip */ }
+        } catch (e) { }
     }
 });
 

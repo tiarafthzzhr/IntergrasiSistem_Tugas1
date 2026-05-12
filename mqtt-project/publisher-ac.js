@@ -19,7 +19,7 @@ let isON = false;
 client.on('connect', () => {
     console.log('[AC Bedroom] Sensor Energi Terhubung.');
 
-    // Kabari broker bahwa perangkat ini ONLINE
+    // informasi tentang broker bahwa perangkat ini ONLINE
     client.publish('chillarrival/status/AC_BEDROOM', 'ONLINE', { retain: true });
 
     client.subscribe('chillarrival/command/AC_BEDROOM');
