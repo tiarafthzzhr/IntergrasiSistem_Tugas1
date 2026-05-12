@@ -22,7 +22,8 @@ client.on('connect', () => {
     // informasi tentang broker bahwa perangkat ini ONLINE
     client.publish('chillarrival/status/AC_BEDROOM', 'ONLINE', { retain: true });
 
-    client.subscribe('chillarrival/command/AC_BEDROOM');
+    // QoS 2: perintah ON/OFF harus diterima tepat SATU kali — tidak boleh hilang, tidak boleh dobel
+    client.subscribe('chillarrival/command/AC_BEDROOM', { qos: 2 });
 
     setInterval(() => {
         if (!isON) return;
