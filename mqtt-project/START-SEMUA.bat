@@ -20,8 +20,9 @@ start "Publisher - Main System (LWT)" cmd /k "cd /d "%~dp0" && node publisher-sy
 timeout /t 1 /nobreak >nul
 
 :: 3. Subscribers
-start "Subscriber - Data Logger"    cmd /k "cd /d "%~dp0" && node subscriber-logger.js"
-start "Subscriber - Alert Monitor"  cmd /k "cd /d "%~dp0" && node subscriber-alert.js"
+start "Subscriber - Logger A (Shared Group)"  cmd /k "cd /d "%~dp0" && node subscriber-logger.js 0 2"
+start "Subscriber - Logger B (Shared Group)"  cmd /k "cd /d "%~dp0" && node subscriber-logger.js 1 2"
+start "Subscriber - Alert Monitor"            cmd /k "cd /d "%~dp0" && node subscriber-alert.js"
 
 echo.
 echo ============================================================

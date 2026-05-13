@@ -403,6 +403,34 @@
             </div>
         </div>
 
+        <!-- Kartu Sensor Pintu -->
+        <div class="energy-card" id="card-pintu" style="border-color: rgba(99,102,241,0.3);">
+            <div class="card-header">
+                <div class="card-title">
+                    <svg class="h-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28">
+                        <defs><linearGradient id="door-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#a5b4fc"/><stop offset="100%" stop-color="#6366f1"/></linearGradient></defs>
+                        <path fill="url(#door-grad)" d="M19 3H5C3.9 3 3 3.9 3 5V21H5V5H19V21H21V5C21 3.9 20.1 3 19 3ZM13 18C12.4 18 12 17.6 12 17C12 16.4 12.4 16 13 16C13.6 16 14 16.4 14 17C14 17.6 13.6 18 13 18Z"/>
+                        <rect x="7" y="5" width="10" height="14" rx="1" fill="url(#door-grad)" opacity="0.4"/>
+                    </svg> Sensor Pintu
+                </div>
+                <div class="mqtt-feature" style="background:rgba(99,102,241,0.25);color:#a5b4fc;">QoS 1 · Retain</div>
+            </div>
+            <div class="card-content" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1rem; padding-top:1rem;">
+                <div id="pintu-status-display" style="font-size:3rem; text-align:center;">🚪</div>
+                <div id="pintu-status-badge" style="padding:0.5rem 1.5rem; border-radius:999px; font-size:1.1rem; font-weight:bold; background:rgba(100,116,139,0.2); color:#94a3b8; letter-spacing:0.05em;">
+                    TERTUTUP
+                </div>
+                <div id="pintu-time" style="font-size:0.8rem; color:var(--text-secondary);">--</div>
+                <div class="btn-group" style="margin-top:0.5rem;">
+                    <button class="btn" onclick="controlPintu('TERBUKA')" style="border-color:#f87171; color:#f87171;">Buka Pintu</button>
+                    <button class="btn" onclick="controlPintu('TERTUTUP')" style="border-color:#10b981; color:#10b981;">Tutup Pintu</button>
+                </div>
+                <p style="font-size:0.8rem; color:var(--text-secondary); text-align:center; margin:0;">
+                    Retain: status tersimpan di broker,<br>langsung muncul saat refresh
+                </p>
+            </div>
+        </div>
+
         <div class="energy-card card-suhu" style="border-color: rgba(245, 158, 11, 0.3);">
             <div class="wave-bg"></div>
             <div class="card-header">
@@ -454,7 +482,9 @@
                     </div>
                     <div class="chart-donut"></div>
                 </div>
-                <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:1rem; margin-bottom: 1.5rem;">(1000 Watt)</p>
+                <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:1rem; margin-bottom: 1rem;">(1000 Watt)</p>
+
+                <div id="ac-status-badge" style="display:inline-block; padding:0.3rem 0.8rem; border-radius:999px; font-size:0.85rem; font-weight:bold; background:rgba(100,116,139,0.2); color:#94a3b8; margin-bottom:1rem;">● MATI</div>
 
                 <div class="btn-group">
                     <button class="btn" onclick="sendCommand('AC_BEDROOM', 'ON')">Turn ON</button>
@@ -485,7 +515,9 @@
                     </div>
                     <div class="chart-donut"></div>
                 </div>
-                <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:1rem; margin-bottom: 1.5rem;">(40 Watt) Data disimpan oleh Broker!</p>
+                <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:1rem; margin-bottom: 1rem;">(40 Watt) Data disimpan oleh Broker!</p>
+
+                <div id="lamp-status-badge" style="display:inline-block; padding:0.3rem 0.8rem; border-radius:999px; font-size:0.85rem; font-weight:bold; background:rgba(100,116,139,0.2); color:#94a3b8; margin-bottom:1rem;">● MATI</div>
 
                 <div class="btn-group">
                     <button class="btn" onclick="sendCommand('LAMP_KITCHEN', 'ON')">Turn ON</button>
@@ -576,6 +608,20 @@
         let timerAC = null;
         let timerLamp = null;
 
+        function setBadgeOn(badgeId) {
+            const badge = document.getElementById(badgeId);
+            badge.textContent = '● MENYALA';
+            badge.style.background = 'rgba(16,185,129,0.2)';
+            badge.style.color = '#10b981';
+        }
+
+        function setBadgeOff(badgeId) {
+            const badge = document.getElementById(badgeId);
+            badge.textContent = '● MATI';
+            badge.style.background = 'rgba(100,116,139,0.2)';
+            badge.style.color = '#94a3b8';
+        }
+
         function setDeviceStale(deviceId) {
             if (deviceId === 'AC_BEDROOM') {
                 document.getElementById('ac-kwh').style.opacity = '0.3';
@@ -583,12 +629,14 @@
                 document.getElementById('ac-offline-banner').style.display = 'block';
                 document.getElementById('ac-offline-banner').textContent = '📡 Tidak ada sinyal dari publisher AC';
                 document.getElementById('card-ac').style.borderColor = 'rgba(239,68,68,0.5)';
+                setBadgeOff('ac-status-badge');
             } else {
                 document.getElementById('lamp-kwh').style.opacity = '0.3';
                 document.getElementById('lamp-cost').parentElement.style.opacity = '0.3';
                 document.getElementById('lamp-offline-banner').style.display = 'block';
                 document.getElementById('lamp-offline-banner').textContent = '📡 Tidak ada sinyal dari publisher Lampu';
                 document.getElementById('card-lamp').style.borderColor = 'rgba(239,68,68,0.5)';
+                setBadgeOff('lamp-status-badge');
             }
         }
 
@@ -626,6 +674,14 @@
             // QoS 2 (Exactly Once): perintah ON/OFF tidak boleh hilang dan tidak boleh dobel
             client.publish(`chillarrival/command/${deviceId}`, action, { qos: 2 });
             console.log(`[QoS 2] Mengirim perintah: ${action} ke ${deviceId}`);
+
+            const badgeId = deviceId === 'AC_BEDROOM' ? 'ac-status-badge' : 'lamp-status-badge';
+            if (action === 'ON') setBadgeOn(badgeId);
+            else setBadgeOff(badgeId);
+        }
+
+        function controlPintu(status) {
+            client.publish('chillarrival/sensor/pintu', status, { qos: 1, retain: true });
         }
 
         function publishSystemError() {
@@ -642,6 +698,7 @@
 
             client.subscribe('chillarrival/energy/+');
             client.subscribe('chillarrival/sensor/suhu');
+            client.subscribe('chillarrival/sensor/pintu', { qos: 1 });
             client.subscribe('chillarrival/system/status');
             client.subscribe('chillarrival/status/+');
             client.subscribe('chillarrival/alert', { qos: 1 });
@@ -671,6 +728,26 @@
                     document.getElementById('suhu-val').innerHTML = `${data.suhu} <span style="font-size:1rem;color:var(--text-secondary)">°C</span>`;
                     document.getElementById('suhu-time').textContent = `Terakhir: ${data.waktu}`;
                 } catch (e) { }
+            }
+            else if (topic === 'chillarrival/sensor/pintu') {
+                const isOpen = msg === 'TERBUKA';
+                const badge = document.getElementById('pintu-status-badge');
+                const display = document.getElementById('pintu-status-display');
+                const time = document.getElementById('pintu-time');
+                if (isOpen) {
+                    badge.textContent = '● TERBUKA';
+                    badge.style.background = 'rgba(239,68,68,0.2)';
+                    badge.style.color = '#f87171';
+                    display.textContent = '🚪↔';
+                    document.getElementById('card-pintu').style.borderColor = 'rgba(239,68,68,0.4)';
+                } else {
+                    badge.textContent = '● TERTUTUP';
+                    badge.style.background = 'rgba(16,185,129,0.2)';
+                    badge.style.color = '#10b981';
+                    display.textContent = '🚪';
+                    document.getElementById('card-pintu').style.borderColor = 'rgba(99,102,241,0.3)';
+                }
+                time.textContent = 'Update: ' + new Date().toLocaleTimeString('id-ID');
             }
             else if (topic.startsWith('chillarrival/status/')) {
                 const deviceId = topic.split('/')[2];
@@ -706,12 +783,14 @@
                         document.getElementById('ac-cost').textContent = data.cost.toLocaleString('id-ID');
                         costAC = data.cost;
                         resetDeviceTimer('AC_BEDROOM');
+                        setBadgeOn('ac-status-badge');
                     }
                     else if (data.deviceId === 'LAMP_KITCHEN') {
                         document.getElementById('lamp-kwh').innerHTML = `${data.kwh} <span style="font-size:1rem;color:var(--text-secondary)">kWh</span>`;
                         document.getElementById('lamp-cost').textContent = data.cost.toLocaleString('id-ID');
                         costLamp = data.cost;
                         resetDeviceTimer('LAMP_KITCHEN');
+                        setBadgeOn('lamp-status-badge');
                     }
 
                     updateTotal();
